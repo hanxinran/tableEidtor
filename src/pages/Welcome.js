@@ -52,6 +52,7 @@ export default class Table extends Component {
   __dragSelectingEndRowIndex = null
   __draggingRectBoundingUpdating = false
   __selectedCellsCleared = false
+  
 
   handleToolbarMouseDown = (event) => {
     event.preventDefault()
@@ -201,6 +202,7 @@ export default class Table extends Component {
       } else {
         this.__dragSelected = false
       }
+     
 
       this.confirmDragSelecting()
 
@@ -232,24 +234,27 @@ export default class Table extends Component {
     if (!this.__dragSelectingStartColumnIndex || !this.__dragSelectingStartRowIndex || !this.__dragSelectingEndColumnIndex || !this.__dragSelectingEndRowIndex) {
       return false
     }
+    console.log( [this.__dragSelectingStartColumnIndex, this.__dragSelectingStartRowIndex],
+      [this.__dragSelectingEndColumnIndex, this.__dragSelectingEndRowIndex],999)
+      // debugger
+    // const { cellKeys: selectedCells, spannedCellBlockKeys } = TableUtils.getCellsInsideRect(
+    //   this.props.editorState, this.tableKey,
+    //   [this.__dragSelectingStartColumnIndex, this.__dragSelectingStartRowIndex],
+    //   [this.__dragSelectingEndColumnIndex, this.__dragSelectingEndRowIndex]
+    // )
+   
 
-    const { cellKeys: selectedCells, spannedCellBlockKeys } = TableUtils.getCellsInsideRect(
-      this.props.editorState, this.tableKey,
-      [this.__dragSelectingStartColumnIndex, this.__dragSelectingStartRowIndex],
-      [this.__dragSelectingEndColumnIndex, this.__dragSelectingEndRowIndex]
-    )
+    // if (selectedCells.length < 2) {
+    //   return false
+    // }
 
-    if (selectedCells.length < 2) {
-      return false
-    }
-
-    this.setState({
-      selectedColumnIndex: -1,
-      selectedRowIndex: -1,
-      cellsMergeable: spannedCellBlockKeys.length === 0,
-      cellSplittable: false,
-      selectedCells: selectedCells
-    }, this.renderCells)
+    // this.setState({
+    //   selectedColumnIndex: -1,
+    //   selectedRowIndex: -1,
+    //   cellsMergeable: spannedCellBlockKeys.length === 0,
+    //   cellSplittable: false,
+    //   selectedCells: selectedCells
+    // }, this.renderCells)
 
   }
 
