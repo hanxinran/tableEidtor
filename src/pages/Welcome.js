@@ -1,7 +1,7 @@
-import styles from './index.less';
+// import styles from './index.less';
 import React, { Component } from 'react';
 import { supportsHistory } from 'history/DOMUtils';
-
+import './style.scss'
 export default class Table extends Component {
 
   constructor(props){
@@ -255,6 +255,38 @@ export default class Table extends Component {
     //   cellSplittable: false,
     //   selectedCells: selectedCells
     // }, this.renderCells)
+    let startLocation = [this.__dragSelectingStartColumnIndex, this.__dragSelectingStartRowIndex]
+    let endLocation = [this.__dragSelectingEndColumnIndex, this.__dragSelectingEndRowIndex]
+    function getRenderKey(startLocation,endLocation){
+      const [startColIndex, startRowIndex] = startLocation
+      const [endColIndex, endRowIndex] = endLocation
+    
+      const leftColIndex = Math.min(startColIndex, endColIndex)
+      const rightColIndex = Math.max(startColIndex, endColIndex)
+      const upRowIndex = Math.min(startRowIndex, endRowIndex)
+      const downRowIndex = Math.max(startRowIndex, endRowIndex)
+    
+      const matchedCellLocations = []
+    
+      for (let ii = leftColIndex;ii <= rightColIndex;ii++) {
+        for (let jj = upRowIndex;jj <= downRowIndex;jj ++) {
+          matchedCellLocations.push(ii+''+jj)
+        }
+      }
+      console.log(matchedCellLocations,66888)
+      return matchedCellLocations
+    }
+
+    let  selectKeys = getRenderKey(startLocation,endLocation)
+     this.setState({
+      selectedColumnIndex: -1,
+      selectedRowIndex: -1,
+      cellsMergeable: selectKeys.length === 0,
+      cellSplittable: false,
+      selectedCells: selectKeys
+    })
+   
+
 
   }
 
@@ -532,7 +564,7 @@ export default class Table extends Component {
 
   createCell(rowIndex,colIndex){
 
-    return {rowIndex,colIndex,rowSpan:1,colSpan:1,cellIndex:rowIndex*10+colIndex,value:''}
+    return {rowIndex,colIndex,rowSpan:1,colSpan:1,cellIndex:''+colIndex+rowIndex,value:''}
   }
 
 
@@ -812,9 +844,9 @@ export default class Table extends Component {
 
     return (
       <div className="bf-table-context-menu" onContextMenu={this.handleContextMenuContextMenu} contentEditable={false} style={contextMenuPosition}>
-        <div className="context-menu-item" onMouseDown={this.mergeCells} data-disabled={!cellsMergeable}>{this.language.mergeCells}</div>
-        <div className="context-menu-item" onMouseDown={this.splitCell} data-disabled={!cellSplittable}>{this.language.splitCell}</div>
-        <div className="context-menu-item" onMouseDown={this.removeTable}>{this.language.removeTable}</div>
+        <div className="context-menu-item" onMouseDown={this.mergeCells} data-disabled={!cellsMergeable}>{'合并单元格'}</div>
+        <div className="context-menu-item" onMouseDown={this.splitCell} data-disabled={!cellSplittable}>{'拆分单元格'}</div>
+        <div className="context-menu-item" onMouseDown={this.removeTable}>{'删除表格'}</div>
       </div>
     )
 
@@ -834,8 +866,14 @@ export default class Table extends Component {
   }
 
   renderRow=(cells)=>{
+  let {selectedCells} = this.state
   return cells.map((cell,i)=> {
       let {rowSpan,colSpan,rowIndex,colIndex,cellIndex} = cell;
+      let style={}
+      if(selectedCells.includes(cellIndex)){
+        style={'border':'1px solid blue'}
+      }
+      
       let cellProps={
         'data-active': !!~this.state.selectedCells.indexOf(cell.key),
         'data-row-index': rowIndex,
@@ -845,6 +883,7 @@ export default class Table extends Component {
 
         // 'data-table-key': tableKey,
         // className: `bf-table-cell ${cell.props.className}`,
+        
         colSpan: colSpan,
         rowSpan: rowSpan,
         onClick: this.selectCell,
@@ -856,7 +895,7 @@ export default class Table extends Component {
 
 
 
-     return <td key={i} {...cellProps}> <input type="text" value={cell.value} onChange={(e)=>this.onSetCellValue(e)}/></td>
+     return <td key={i} {...cellProps} style={style}> <input type="text" value={cell.value} onChange={(e)=>this.onSetCellValue(e)}/></td>
     })
   }
 
@@ -864,8 +903,8 @@ export default class Table extends Component {
 
 
   render(){
-    const { tableRows, dragSelecting, draggingRectBounding,tableData } = this.state
-    console.log(tableData,88)
+    const { tableRows, dragSelecting, draggingRectBounding,tableData,selectedCells,contextMenuPosition} = this.state
+    console.log(contextMenuPosition,4433)
     return (
       <div className="bf-table-container">
      
@@ -877,9 +916,10 @@ export default class Table extends Component {
           onMouseUp={this.hanldeTableMouseUp}
           onMouseMove={this.handleTableMouseMove}
           onMouseLeave={this.handleTableMouseLeave}
+          
         >
           {this.createColGroup()}
-          <tbody>
+          <tbody >
             {/* {tableRows.map((cells, rowIndex) => (
               <tr ref={ref => this.__rowRefs[rowIndex] = ref} key={rowIndex}>{cells}</tr>
             ))} */}
@@ -891,10 +931,11 @@ export default class Table extends Component {
            
           </tbody>
         </table>
-        {/* {dragSelecting ? <div className="dragging-rect" style={draggingRectBounding}/> : null}
+
+        {dragSelecting ? <div className="dragging-rect" style={draggingRectBounding}/> : null}
         {this.createContextMenu()}
         {this.createColTools()}
-        {this.createRowTools()} */}
+        {this.createRowTools()}
       </div>
     )
   }
