@@ -1,7 +1,21 @@
-// import styles from './index.less';
+import styles from './index.less';
 import React, { Component } from 'react';
 import { supportsHistory } from 'history/DOMUtils';
-import './style.scss'
+// import styles from './style.scss'
+import {Icon} from 'antd'
+const getIndexFromEvent = (event, ignoredTarget = '') => {
+
+  if (!isNaN(event)) {
+    return event * 1
+  } else if (ignoredTarget && event && event.target && event.target.dataset.role === ignoredTarget) {
+    return false
+  } else if (event && event.currentTarget && event.currentTarget.dataset.index) {
+    return event.currentTarget.dataset.index * 1
+  }
+
+  return false
+
+}
 export default class Table extends Component {
 
   constructor(props){
@@ -115,6 +129,10 @@ export default class Table extends Component {
         colResizeOffset: this.getResizeOffset(event.clientX - this.__colResizeStartAt)
       })
     }
+    // if(this.state.resizeColIndex){
+    //   console.log(this.state.startX,this.state.resizeColIndex,77665)
+    // }
+    console.log(this.state.startX,this.state.resizeColIndex,77665)
 
   }
 
@@ -281,7 +299,7 @@ export default class Table extends Component {
      this.setState({
       selectedColumnIndex: -1,
       selectedRowIndex: -1,
-      cellsMergeable: selectKeys.length === 0,
+      cellsMergeable: selectKeys.length != 0,
       cellSplittable: false,
       selectedCells: selectKeys
     })
@@ -361,24 +379,24 @@ export default class Table extends Component {
         cellsMergeable: false,
         cellSplittable: false,
         selectedColumnIndex: -1
-      }, this.renderCells)
+      },)
       return false
 
     }
 
-    const { cellKeys: selectedCells, spannedCellBlockKeys } = TableUtils.getCellsInsideRect(
-      this.props.editorState, this.tableKey,
-      [selectedColumnIndex, 0],
-      [selectedColumnIndex, this.state.rowToolHandlers.length - 1]
-    )
+    // const { cellKeys: selectedCells, spannedCellBlockKeys } = TableUtils.getCellsInsideRect(
+    //   this.props.editorState, this.tableKey,
+    //   [selectedColumnIndex, 0],
+    //   [selectedColumnIndex, this.state.rowToolHandlers.length - 1]
+    // )
 
     this.setState({
       selectedColumnIndex: selectedColumnIndex,
       selectedRowIndex: -1,
       cellSplittable: false,
-      cellsMergeable: spannedCellBlockKeys.length === 0,
-      selectedCells: selectedCells
-    }, this.renderCells)
+      // cellsMergeable: spannedCellBlockKeys.length === 0,
+      // selectedCells: selectedCells
+    },)
 
   }
 
@@ -400,101 +418,128 @@ export default class Table extends Component {
       return false
     }
 
-    const { cellKeys: selectedCells, spannedCellBlockKeys } = TableUtils.getCellsInsideRect(
-      this.props.editorState, this.tableKey,
-      [0, selectedRowIndex],
-      [this.state.colToolHandlers.length, selectedRowIndex]
-    )
+    // const { cellKeys: selectedCells, spannedCellBlockKeys } = TableUtils.getCellsInsideRect(
+    //   this.props.editorState, this.tableKey,
+    //   [0, selectedRowIndex],
+    //   [this.state.colToolHandlers.length, selectedRowIndex]
+    // )
 
     this.setState({
       selectedColumnIndex: -1,
       selectedRowIndex: selectedRowIndex,
-      cellSplittable: false,
-      cellsMergeable: spannedCellBlockKeys.length === 0,
-      selectedCells: selectedCells
-    }, this.renderCells)
+      // cellSplittable: false,
+      // cellsMergeable: spannedCellBlockKeys.length === 0,
+      // selectedCells: selectedCells
+    }, )
 
   }
 
   insertColumn = (event) => {
 
     const columnIndex = getIndexFromEvent(event)
-
+    let {tableData} = this.state 
     if (columnIndex === false) {
       return false
     }
+    console.log(columnIndex,77)
+    let newCell={colSpan:1,rowSpan:1,value:''}
+
+    tableData=tableData.map((row,ind)=>{
+      row.splice(columnIndex,0,newCell)
+      return row
+    })
 
     this.setState({
       selectedCells: [],
       selectedRowIndex: -1,
       selectedColumnIndex: -1
-    }, () => {
-      this.props.editor.setValue(TableUtils.insertColumn(this.props.editorState, this.tableKey, this.state.tableRows.length, columnIndex))
-    })
+    }, )
 
   }
 
   removeColumn = () => {
 
-    const { selectedColumnIndex } = this.state
+    let { selectedColumnIndex,tableData} = this.state
 
     if (selectedColumnIndex >= 0) {
+      tableData=tableData.map((row,ind)=>{
+        row.splice(selectedColumnIndex,1,)
+        return row
+      })
 
       this.setState({
-        selectedColumnIndex: -1
-      }, () => {
-        this.props.editor.draftInstance.blur()
-        setImmediate(() => {
-          this.props.editor.setValue(TableUtils.removeColumn(this.props.editorState, this.tableKey, selectedColumnIndex))
-        })
-      })
+        selectedColumnIndex: -1,
+        tableData
+      },)
 
     }
 
   }
 
   insertRow = (event) => {
-
+    let {tableData} = this.state
+    let newCell={colSpan:1,rowSpan:1,value:''}
+    let l=tableData[0].length
+    let newRow=Array(l).fill(newCell)
+    
     const rowIndex = getIndexFromEvent(event)
-
+     
     if (rowIndex === false) {
       return false
     }
+    tableData=tableData.splice(rowIndex,0,newRow)
 
     this.setState({
+      tableData,
       selectedCells: [],
       selectedRowIndex: -1,
       selectedColumnIndex: -1
-    }, () => {
-      this.props.editor.setValue(TableUtils.insertRow(this.props.editorState, this.tableKey, this.colLength, rowIndex))
-    })
+    }, )
 
   }
 
   removeRow = () => {
 
-    const { selectedRowIndex } = this.state
+    const { selectedRowIndex,tableData} = this.state
 
     if (selectedRowIndex >= 0) {
 
+      tableData.splice(selectedRowIndex,1)
+
       this.setState({
+        tableData,
         selectedRowIndex: -1
-      }, () => {
-        this.props.editor.draftInstance.blur()
-        setImmediate(() => {
-          this.props.editor.setValue(TableUtils.removeRow(this.props.editorState, this.tableKey, selectedRowIndex))
-        })
-      })
+      }, )
 
     }
 
   }
-
+  resizeColumn=(index,e)=>{
+    this.setState({resizeColIndex:index,startX:e.clientX})
+  }
+  
   mergeCells = () => {
 
-    const { selectedCells, cellsMergeable } = this.state
-
+    let { selectedCells, cellsMergeable,tableData} = this.state
+    let  mergedText = ''
+    
     if (cellsMergeable && selectedCells.length > 1) {
+      let rowSpan =  selectedCells[selectedCells.length-1][1]*1+1
+      let colSpan =  selectedCells[selectedCells.length-1][0]*1+1
+     
+      selectedCells.forEach((item,ind)=>{
+        let col=item[0],row=item[1];
+        let cell=tableData[row][col]
+        if(ind==0){
+          cell.rowSpan=rowSpan
+          cell.colSpan=colSpan
+        }else{
+          cell.rowSpan=0
+          cell.colSpan=0
+        }
+      })
+      console.log(tableData,66)
+      
 
       this.setState({
         selectedCells: [selectedCells[0]],
@@ -502,9 +547,8 @@ export default class Table extends Component {
         cellsMergeable: false,
         selectedRowIndex: -1,
         selectedColumnIndex: -1,
-      }, () => {
-        this.props.editor.setValue(TableUtils.mergeCells(this.props.editorState, this.tableKey, selectedCells))
-      })
+        tableData
+      },)
 
     }
 
@@ -512,18 +556,40 @@ export default class Table extends Component {
 
   splitCell = () => {
 
-    const { selectedCells, cellSplittable } = this.state
-
+    let { selectedCells, cellSplittable,tableData} = this.state
+   
+   
+   console.log(1)
     if (cellSplittable && selectedCells.length === 1) {
+      let a =selectedCells[0][0]
+      let b= selectedCells[0][1]
+      console.log(a,b,2)
+   
+      let {colIndex,rowIndex,rowSpan,colSpan} = tableData[a][b]
+     
+     
+      for(let i=rowIndex;i<rowIndex+rowSpan;i++){
+        for(let j=colIndex;j<colIndex+colSpan;j++){
+          console.log(i,j)
+          if(tableData[i][j]){
+            tableData[i][j].rowSpan=1
+            tableData[i][j].colSpan=1
+          }
+         
+        }
+
+      }
+
+      console.log(tableData,7776)
 
       this.setState({
+        tableData,
         cellSplittable: false,
         cellsMergeable: false,
         selectedRowIndex: -1,
         selectedColumnIndex: -1,
-      }, () => {
-        this.props.editor.setValue(TableUtils.splitCell(this.props.editorState, this.tableKey, selectedCells[0]))
-      })
+      }, )
+
 
     }
 
@@ -537,7 +603,7 @@ export default class Table extends Component {
 
     // this.renderCells(this.props)
    
-    this.createTable({rowNum:3,colNum:2})
+    this.createTable({rowNum:3,colNum:3})
 
     document.body.addEventListener('keydown', this.handleKeyDown, false)
     document.body.addEventListener('mousemove', this.handleMouseMove, false)
@@ -628,7 +694,7 @@ export default class Table extends Component {
     const tableRows = []
     const colToolHandlers = []
     const rowToolHandlers = []
-    debugger
+   
 
     const { editorState, children } = props
 
@@ -708,10 +774,16 @@ export default class Table extends Component {
 
   }
 
-  createColTools () {
+  createColTools =() =>{
 
-    const { colResizing, /*colResizeOffset,*/ colToolHandlers, selectedColumnIndex, defaultColWidth } = this.state
-
+    let  { colResizing, /*colResizeOffset,*/ colToolHandlers, selectedColumnIndex, defaultColWidth,tableData } = this.state
+    colToolHandlers = tableData[0]
+    console.log(this.__tableRef,88)
+    if(this.__tableRef){
+      const tableWidth = this.__tableRef.getBoundingClientRect().width
+     defaultColWidth = tableWidth / tableData[0].length
+    }
+    
     return (
       <div
         data-active={selectedColumnIndex >= 0}
@@ -745,8 +817,9 @@ export default class Table extends Component {
                 data-role="insert-column"
                 className="bf-insert-col-before"
                 onClick={this.insertColumn}
-              >
-                <i className="bfi-add"></i>
+              > 
+              <Icon type="plus" />
+                {/* <i className="bfi-add"></i> */}
               </div>
             </div>
             <div className="bf-col-tool-center">
@@ -769,6 +842,10 @@ export default class Table extends Component {
                 <i className="bfi-add"></i>
               </div>
             </div>
+            <div className="bf-col-tool-trigger"
+             onMouseDown={(event)=>this.resizeColumn(index,event)}
+            >
+            </div>
           </div>
         ))}
       </div>
@@ -778,7 +855,18 @@ export default class Table extends Component {
 
   createRowTools () {
 
-    const { rowToolHandlers, selectedRowIndex } = this.state
+    let  { rowToolHandlers, selectedRowIndex,tableData } = this.state
+    let colLength=tableData.length
+    let  defaultColHeight=0
+    if(this.__tableRef){
+      const tableHeight = this.__tableRef.getBoundingClientRect().height
+      console.log(tableHeight,this.__tableRef.offsetHeight,666)
+     defaultColHeight = 89 / colLength
+    }
+    
+    rowToolHandlers = Array.from({length:colLength}).map((item,index)=> {return {key:index,}})
+    console.log(defaultColHeight,rowToolHandlers,7776)
+    // debugger
 
     return (
       <div
@@ -794,7 +882,7 @@ export default class Table extends Component {
             data-index={index}
             data-active={selectedRowIndex == index}
             className="bf-row-tool-handler"
-            style={{height: item.height}}
+            style={{height: defaultColHeight}}
             onClick={this.selectRow}
           >
             <div className="bf-row-tool-up">
@@ -851,6 +939,7 @@ export default class Table extends Component {
     )
 
   }
+ 
   onSetCellValue = (event) =>{
     const { selectedCells,tableData } = this.state
     const { cellKey,rowIndex,colIndex} = event.currentTarget.parentNode.dataset
@@ -865,10 +954,15 @@ export default class Table extends Component {
 
   }
 
-  renderRow=(cells)=>{
+  renderRow=(cells,rowInd)=>{
   let {selectedCells} = this.state
   return cells.map((cell,i)=> {
+
+      cell.rowIndex=rowInd;
+      cell.colIndex=i
+      cell.cellIndex=''+i+rowInd
       let {rowSpan,colSpan,rowIndex,colIndex,cellIndex} = cell;
+      
       let style={}
       if(selectedCells.includes(cellIndex)){
         style={'border':'1px solid blue'}
@@ -895,7 +989,7 @@ export default class Table extends Component {
 
 
 
-     return <td key={i} {...cellProps} style={style}> <input type="text" value={cell.value} onChange={(e)=>this.onSetCellValue(e)}/></td>
+     return !!cellProps.rowSpan && !!cellProps.colSpan && <td key={i} {...cellProps} style={style}> <input type="text" value={cell.value} onChange={(e)=>this.onSetCellValue(e)}/></td>
     })
   }
 
@@ -904,13 +998,14 @@ export default class Table extends Component {
 
   render(){
     const { tableRows, dragSelecting, draggingRectBounding,tableData,selectedCells,contextMenuPosition} = this.state
-    console.log(contextMenuPosition,4433)
+    console.log(tableData,4433)
     return (
       <div className="bf-table-container">
      
         <table
           data-role="table"
           className={`bf-table${dragSelecting ? ' dragging' : ''}`}
+         
           ref={ref => this.__tableRef = ref}
           onMouseDown={this.handleTableMouseDown}
           onMouseUp={this.hanldeTableMouseUp}
@@ -925,7 +1020,7 @@ export default class Table extends Component {
             ))} */}
              {tableData.map((cells, rowIndex) => (
               <tr ref={ref => this.__rowRefs[rowIndex] = ref} key={rowIndex}>
-                {this.renderRow(cells)}
+                {this.renderRow(cells,rowIndex)}
               </tr>
             ))}
            

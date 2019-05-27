@@ -84,6 +84,7 @@ export default {
     '@antv/data-set': 'DataSet',
   },
   ignoreMomentLocale: true,
+  // disableCSSModules:true,
   lessLoaderOptions: {
     javascriptEnabled: true,
   },
